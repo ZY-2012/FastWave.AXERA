@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.DS_Store
+origin/
+export/
+compile/
+calib/
+*.onnx
+*.pth
+cpp/build/
+cpp/bin/
+cpp/toolchains/
+__pycache__/

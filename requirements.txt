@@ -1,0 +1,3 @@
+numpy>=1.20
+# NPU 运行时：pip 包名 pyaxengine，导入名 axengine（AX650 BSP 镜像通常已自带）
+pyaxengine

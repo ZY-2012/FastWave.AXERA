@@ -1,0 +1,21 @@
+{
+  "name": "FastWave",
+  "alias": "FastWave.AXERA",
+  "sample_rate": 48000,
+  "input_sr_supported": [
+    6000,
+    48000
+  ],
+  "chunk_samples": 32768,
+  "n_fft": 1024,
+  "hop_length": 256,
+  "num_steps": 8,
+  "sigma_min": 0.002,
+  "sigma_max": 80.0,
+  "rho": 7.0,
+  "pos_emb_channels": 128,
+  "pos_emb_scale": 50000.0,
+  "pos_emb_dim": 512,
+  "axmodel": "fastwave_nfe.axmodel",
+  "size_mb": 3.82
+}
