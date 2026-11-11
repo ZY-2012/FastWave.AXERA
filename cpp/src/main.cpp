@@ -13,7 +13,7 @@ static void usage(const char* argv0) {
         "  --assets <dir>   diffusion-embedding npy files (default: models/assets)\n"
         "  --steps <n>      EDM sampling steps (default 8, 4 = faster)\n"
         "  --overlap <r>    chunk overlap ratio (default 0.5, 0 = fastest)\n"
-        "  --no-denoise     disable the output noise post filter\n",
+        "  --denoise        enable the spectral-subtraction noise post filter\n",
         argv0);
 }
 
@@ -28,12 +28,12 @@ int main(int argc, char** argv) {
     std::string assets = "models/assets";
     int steps = 8;
     double overlap = 0.5;
-    bool denoise = true;
+    bool denoise = false;
     for (int i = 4; i < argc; ++i) {
         if (!std::strcmp(argv[i], "--assets") && i + 1 < argc) assets = argv[++i];
         else if (!std::strcmp(argv[i], "--steps") && i + 1 < argc) steps = std::atoi(argv[++i]);
         else if (!std::strcmp(argv[i], "--overlap") && i + 1 < argc) overlap = std::atof(argv[++i]);
-        else if (!std::strcmp(argv[i], "--no-denoise")) denoise = false;
+        else if (!std::strcmp(argv[i], "--denoise")) denoise = true;
         else {
             usage(argv[0]);
             return 1;

@@ -97,7 +97,7 @@ class FastWaveSR:
         return np.clip(x[0], -1.0, 1.0 - 1e-7)
 
     # --------------------------------------------------------------- pipeline
-    def enhance(self, wav, sr_in, progress=None, normalize=True, denoise=True, denoise_alpha=1.0):
+    def enhance(self, wav, sr_in, progress=None, normalize=True, denoise=False, denoise_alpha=1.0):
         """wav: 1-D float32 at sr_in. Returns 48 kHz float32."""
         wav = np.asarray(wav, dtype=np.float32)
         peak = float(np.max(np.abs(wav))) if len(wav) else 0.0

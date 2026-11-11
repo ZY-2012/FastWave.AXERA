@@ -28,9 +28,9 @@ bash run_ax650.sh samples/listen/8k/OSR_us_000_0010_input_8k.wav output.wav
 # Python SDK
 bash run_ax650.sh samples/listen/8k/OSR_us_000_0010_input_8k.wav output.wav --python
 
-# 4 步采样（更快）/ 关闭后置降噪
+# 4 步采样（更快）/ 打开后置降噪
 bash run_ax650.sh samples/listen/16k/speech_2_input_16k.wav output.wav --steps 4
-bash run_ax650.sh samples/listen/8k/OSR_cn_000_0072_input_8k.wav output.wav --no-denoise
+bash run_ax650.sh samples/listen/8k/OSR_cn_000_0072_input_8k.wav output.wav --denoise
 ```
 
 输入支持 6–48 kHz，输出固定 48 kHz。

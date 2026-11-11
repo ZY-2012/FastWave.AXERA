@@ -21,7 +21,7 @@ def main():
     ap.add_argument("--overlap", type=float, default=0.5, help="chunk overlap ratio")
     ap.add_argument("--steps", type=int, default=8, help="EDM sampling steps (4 or 8)")
     ap.add_argument("--seed", type=int, default=1234)
-    ap.add_argument("--no-denoise", action="store_true", help="disable the output noise post filter")
+    ap.add_argument("--denoise", action="store_true", help="enable the spectral-subtraction noise post filter")
     args = ap.parse_args()
 
     wav, sr = A.read_wav(args.input)
@@ -29,7 +29,7 @@ def main():
     model = FastWaveSR(args.model, num_steps=args.steps, chunk=args.chunk,
                        overlap=args.overlap, seed=args.seed)
     t0 = time.time()
-    out = model.enhance(wav, sr, denoise=not args.no_denoise,
+    out = model.enhance(wav, sr, denoise=args.denoise,
                         progress=lambda i, n: print(f"\r[chunk ] {i}/{n}", end="", flush=True))
     dt = time.time() - t0
     print()

@@ -214,7 +214,7 @@ public:
     }
 
     bool enhance(const std::vector<float>& wav, int sr_in, double overlap, std::vector<float>& out,
-                 bool denoise = true) {
+                 bool denoise = false) {
         float peak = 0.0f;
         for (float v : wav) peak = std::max(peak, std::fabs(v));
         if (peak < 1e-8f) peak = 1.0f;

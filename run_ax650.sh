@@ -1,6 +1,6 @@
 #!/bin/bash
 # FastWave.AXERA one-click demo: any sample rate -> 48 kHz.
-#   bash run_ax650.sh [input.wav] [output.wav] [--cpp|--python] [--steps N] [--overlap R] [--no-denoise]
+#   bash run_ax650.sh [input.wav] [output.wav] [--cpp|--python] [--steps N] [--overlap R] [--denoise]
 set -e
 cd "$(dirname "$0")"
 export LD_LIBRARY_PATH=/soc/lib:${LD_LIBRARY_PATH:-}

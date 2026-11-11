@@ -7,9 +7,14 @@
 | 量化 | U16 激活 / S8 权重 / U16 输出，MinMax 标定，Pulsar2 8.0，`compiler.check=2` |
 | 单次 NFE（chunk 32768 = 0.68 s @48k） | **499.8 ms**（min 499.5 / max 500.1，n=10） |
 | 8 步 / chunk | 3.99 s |
-| 端到端 RTF（8 步，50% overlap） | **10.97**（C++）/ **10.96**（Python） |
+| 端到端 RTF（8 步，50% overlap） | **10.97**（C++）/ **10.96**（Python）；板端 6 个示例 10.92–11.71 |
 | 端到端 RTF（4 步，50% overlap） | **5.51**（C++）/ **5.49**（Python） |
 | 端到端 RTF（8 步，`--overlap 0`） | **6.29**（C++，无重叠拼接） |
+
+## 后处理（可选）
+
+默认关闭。`--denoise` 打开谱减降噪：静音段噪声 0.00132 → 0.00053，语音段电平不变
+（0.1238 → 0.1231），HF 约 -1.1 dB。
 
 ## 说明
 
@@ -19,23 +24,35 @@
 
 ## 单 NFE 0.5 s 的构成（实测探针）
 
-| 组成 | 15 份合计 |
-|---|---|
-| Conv（12.8 GMAC，同尺寸 1x1 Conv 探针 ≈ 570 GMAC/s） | ~25 ms |
-| STFT（15 份） | 15 ms |
-| iSTFT（15 份） | 37 ms |
-| sigmoid×tanh（128×32768） | 31 ms |
-| GRN（64×32768） | 22 ms |
-| 其余逐元素 / reshape / gather / overlap-add（15 个 FFC 块，2600+ 个 op） | ~370 ms |
+Pulsar2 的逐算子调度报告（`compiler.npu_perf=true`）给出了确切答案：
+单次 NFE 共 **24514 个 job**，按调度周期分类：
 
-单次 NFE 的真正瓶颈不是卷积，而是 15 个 FFC 块里 STFT/iSTFT 带来的大量
-4.2 M 元素级逐元素算子（每 NFE 约 4 GB DDR 访存）。图是严格串行的，
-AX650 的三核无法并行（实测只有 core0 在工作，多 session 并行也无加速）。
+| 类别 | 调度周期占比 | op 数 |
+|---|---:|---:|
+| 数据搬运（Slice/assign/Transpose/Gather/Concat/Pad/Reshape/Squeeze） | 74.3% | 15449 |
+| 逐元素（Mul/Add/Sub/Neg/Sigmoid/Tanh/Reduce） | 18.0% | 6624 |
+| 矩阵乘（FullyConnected） | 4.7% | 1455 |
+| 卷积（Conv） | 2.6% | 779 |
+| 其他 | 0.5% | 207 |
+
+总周期 1529M，调度 job 数 24514
+
+
+**算力只占 7%（MatMul 4.7% + Conv 2.6%），74% 是数据搬运**（Slice/assign/Transpose/
+Gather/Concat/Pad/Reshape）。也就是说这个模型在 AX650 上不是"算不动"，而是
+"搬不动"：15 个 FFC 块里的 STFT/iSTFT 需要在时间轴（T 连续）上做 FFT，而 NPU 的
+矩阵乘友好布局是通道轴，每次 layout 变化都被编译器拆成大量 Slice+assign 拷贝
+（6124 个 Slice + 5376 个 assign）。
+
+图是严格串行的，AX650 三核无法并行（实测只有 core0 在工作，多 session 并行也无加速）。
 
 可选的优化方向（按收益排序）：
 
-1. **换成 int8 激活**（S8/U8）再测一次：同尺寸探针 U8 比 U16 快 2.8×，访存减半，
-   但 FFT 分支的动态范围较大，需要重新看精度；
-2. 增大 chunk（如 65536）减少每秒的算子启动次数；
-3. 把 FFT 的 32×32 MatMul 换成一次更大的 GEMM（合并 stage1/stage2 的批维）；
-4. 用 `compiler.npu_perf` / `dump_simulator_cycle_trace` 做逐算子定位后再定点优化。
+1. **重写 FFT 的数据布局**（最大收益）：避免每次 FFT 的 3 次 transpose，把
+   1024 点 FFT 拆成"沿 T 的 depthwise Conv（kernel=32, stride=32）+ 沿通道的 MatMul"，
+   或者用更大的 chunk 摊薄布局转换开销；预计 1.5–2×；
+2. **换成 int8 激活**（S8/U8）：访存直接减半，同尺寸探针 U8 比 U16 快 2.8×，
+   但 FFT 分支动态范围大，需要重新验精度；
+3. 增大 chunk（如 65536）减少每秒的布局转换次数（线性摊薄）；
+4. 逐算子 profile：`compiler.npu_perf=true`，产物在
+   `compile/work_perf/compiler/debug/subgraph_npu_0/b1/op_profile.csv`。
