@@ -11,3 +11,4 @@ cpp/build/
 cpp/bin/
 cpp/toolchains/
 __pycache__/
+/bin/

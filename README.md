@@ -66,6 +66,16 @@ AX650（NPU3，BSP V3.10.2），chunk 32768 点（0.68 s）：
 | C++ | 10.97 | 5.51 | 6.29 |
 | Python SDK | 10.96 | 5.49 | — |
 
+## 从源码编译（C++）
+
+```bash
+bash cpp/download_toolchains.sh   # Arm GNU 9.2 + AX650 BSP SDK（约 1.1 GB，仅一次）
+bash cpp/build_ax650.sh           # -> bin/fastwave_ax650
+```
+
+`build_ax650.sh` 在缺少工具链/BSP 时会自动调用 `download_toolchains.sh`；已有工具链可用
+`TOOLCHAIN_ROOT=` / `BSP_MSP_DIR=` 覆盖。
+
 ## 模型转换
 
 ```bash

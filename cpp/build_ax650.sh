@@ -9,6 +9,13 @@ BUILD_DIR="${CPP_DIR}/build/ax650"
 TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-${CPP_DIR}/toolchains/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu}"
 BSP_MSP_DIR="${BSP_MSP_DIR:-${CPP_DIR}/toolchains/ax650n_bsp_sdk/msp/out}"
 
+# auto-fetch toolchain + BSP when they are missing
+if [[ ! -x "${TOOLCHAIN_ROOT}/bin/aarch64-none-linux-gnu-g++" || \
+      ! -f "${BSP_MSP_DIR}/include/ax_engine_api.h" ]]; then
+  echo "== toolchain / BSP missing, running cpp/download_toolchains.sh"
+  bash "${CPP_DIR}/download_toolchains.sh"
+fi
+
 if [[ ! -x "${TOOLCHAIN_ROOT}/bin/aarch64-none-linux-gnu-g++" ]]; then
   echo "ERROR: AArch64 toolchain not found: ${TOOLCHAIN_ROOT}" >&2
   exit 2
@@ -27,7 +34,9 @@ cmake -S "$CPP_DIR" -B "$BUILD_DIR" \
     -DCMAKE_CXX_COMPILER="${TOOLCHAIN_ROOT}/bin/aarch64-none-linux-gnu-g++" \
     -DAX650=ON -DBSP_MSP_DIR="$BSP_MSP_DIR"
 cmake --build "$BUILD_DIR" -j"$(nproc)"
-mkdir -p "$CPP_DIR/bin"
+ROOT="$(cd "$CPP_DIR/.." && pwd)"
+mkdir -p "$CPP_DIR/bin" "$ROOT/bin"
 cp "$BUILD_DIR/fastwave_ax650" "$CPP_DIR/bin/fastwave_ax650"
 "${TOOLCHAIN_ROOT}/bin/aarch64-none-linux-gnu-strip" --strip-unneeded "$CPP_DIR/bin/fastwave_ax650"
-echo "Built: $CPP_DIR/bin/fastwave_ax650"
+cp "$CPP_DIR/bin/fastwave_ax650" "$ROOT/bin/fastwave_ax650"
+echo "Built: $ROOT/bin/fastwave_ax650"
